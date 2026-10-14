@@ -10,7 +10,42 @@ const $ = s => document.querySelector(s); const $$ = s => [...document.querySele
 let cart = [];
 const rupees = n => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(n);
 function art(kind, extra=''){return `<span class="product-art ${kind} ${extra}" aria-hidden="true"></span>`}
-function renderProducts(filter='all') {const items=PRODUCTS.filter(p=>filter==='all'||p.category===filter);$('#product-grid').innerHTML=items.map(p=>`<article class="product-card"><div class="product-image"><span class="product-label">${p.label}</span>${art(p.kind)}</div><div class="product-info"><div class="product-meta"><div><h3>${p.name}</h3><div class="product-category">${p.category==='gemstone'?'Gemstone':'Jewellery'}</div></div><div class="product-price">${rupees(p.price)}</div></div><p>${p.description}</p><button class="add-button" data-add="${p.id}">Add to bag <span>＋</span></button></div></article>`).join('');$$('[data-add]').forEach(b=>b.addEventListener('click',()=>addToCart(b.dataset.add)));}
+
+function renderProducts(filter = 'all') {
+  const items = PRODUCTS.filter(p => filter === 'all' || p.category === filter);
+
+  $('#product-grid').innerHTML = items.map(p => {
+    const images = {
+      ruby: 'images/ruby.jpg',
+      emerald: 'images/emerald.jpg',
+      sapphire: 'images/sapphire.jpg'
+    };
+
+    const image = images[p.id];
+
+    return `<article class="product-card">
+      <div class="product-image">
+        <span class="product-label">${p.label}</span>
+        ${image
+          ? `<img src="${image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy">`
+          : art(p.kind)}
+      </div>
+      <div class="product-info">
+        <div class="product-meta">
+          <div>
+            <h3>${p.name}</h3>
+            <div class="product-category">${p.category === 'gemstone' ? 'Gemstone' : 'Jewellery'}</div>
+          </div>
+          <div class="product-price">${rupees(p.price)}</div>
+        </div>
+        <p>${p.description}</p>
+        <button class="add-button" data-add="${p.id}">Add to bag <span>＋</span></button>
+      </div>
+    </article>`;
+  }).join('');
+
+  $$('[data-add]').forEach(b => b.addEventListener('click', () => addToCart(b.dataset.add)));
+}
 function addToCart(id){const found=cart.find(x=>x.id===id);found?found.qty++:cart.push({id,qty:1});renderCart();openCart();}
 function total(){return cart.reduce((sum,row)=>sum+PRODUCTS.find(p=>p.id===row.id).price*row.qty,0)}
 function renderCart(){const count=cart.reduce((s,x)=>s+x.qty,0);$('#cart-count').textContent=count;$('#drawer-count').textContent=`(${count})`;$ ('#cart-total').textContent=rupees(total());$('#checkout-total').textContent=rupees(total());$('#checkout-items-label').textContent=`${count} item${count===1?'':'s'}`;$('#cart-items').innerHTML=cart.length?cart.map(row=>{const p=PRODUCTS.find(p=>p.id===row.id);return `<div class="cart-row"><div class="cart-thumb">${art(p.kind)}</div><div><h4>${p.name}</h4><small>${rupees(p.price)} each</small><div class="qty-control"><button data-qty="${p.id}" data-delta="-1" aria-label="Decrease quantity">−</button><span>${row.qty}</span><button data-qty="${p.id}" data-delta="1" aria-label="Increase quantity">+</button></div></div><button class="remove-item" data-remove="${p.id}">Remove</button></div>`}).join(''):'<p class="empty-cart">Your bag is waiting for something beautiful.</p>';$$('[data-qty]').forEach(b=>b.addEventListener('click',()=>changeQty(b.dataset.qty,Number(b.dataset.delta))));$$('[data-remove]').forEach(b=>b.addEventListener('click',()=>{cart=cart.filter(x=>x.id!==b.dataset.remove);renderCart()}));$('#checkout-button').disabled=!cart.length;$('#checkout-button').style.opacity=cart.length?'1':'.5';}
